@@ -46,15 +46,18 @@ if [ -s "$output_dir/urls_from_comments.txt" ]; then
     rm $output_dir/urls_from_comments.txt
 fi
 
+progress "Finding URLs"
+cat "$output_dir/live_urls.txt" | urlfinder --silent | tee "$output_dir/extracted_urls.txt" || error "Fail to extract Urls"
+
 progress "Scanning for XSS..."
-cat "$output_dir/live_urls.txt" | urlfinder --silent | \
+cat "$output_dir/extracted_urls.txt" | \
 grep -vE "\.(js|jpg|jpeg|png|gif|svg|ico|css|pdf|zip|rar|exe|woff2?|ttf|mp4|mp3|json|xml|yaml)$" | \
 grep -vE "/(assets|static|images|downloads|robots\.txt)$" | \
 xargs -I@ dalfox url @ || error "XSS scan failed."
 
 
 progress "Scanning for SQL injection..."
-cat "$output_dir/live_url.txt" | \
+cat "$output_dir/live_urls.txt" | \
 xargs -I@ sh -c '
     output_dir="'$output_dir'"
     waybackurls @ | gf sqli >> "$output_dir/sqli_vulnerabilities.txt"
