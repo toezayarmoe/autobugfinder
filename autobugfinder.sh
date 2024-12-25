@@ -29,41 +29,41 @@ echo $domain | haktrails subdomains | httpx -silent >> "$output_dir/live_assets.
 cat $output_dir/live_assets.txt | awk '{print $1}' | sort -u | tee "$output_dir/live_urls.txt"
 
 
-# progress "Extracting JavaScript files..."
-# cat "$output_dir/live_urls.txt" | getJS --complete | tee  "$output_dir/js_files.txt" || error "Failed to extract JavaScript files."
+progress "Extracting JavaScript files..."
+cat "$output_dir/live_urls.txt" | getJS --complete | tee  "$output_dir/js_files.txt" || error "Failed to extract JavaScript files."
 
 
-# progress "Extracting commented URLs from JavaScript files"
-# {
-#     # Loop through each JavaScript file, extracting URLs from comments
-#     while read js_file; do
-#         # Extract comments and URLs inside them
-#         curl -s "$js_file" | grep -oP '(?<=<!--)[^>]+(?=-->)' | grep -oE '\b(https?|http)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]' >> "$output_dir/urls_from_comments.txt"
-#     done < "$output_dir/js_files.txt"
-# } || error "Failed to extract URLs from comments. Continuing to next step..."
-# if [ -s "$output_dir/urls_from_comments.txt" ]; then
-#     echo "No commented url found"
-#     rm $output_dir/urls_from_comments.txt
-# fi
+progress "Extracting commented URLs from JavaScript files"
+{
+    # Loop through each JavaScript file, extracting URLs from comments
+    while read js_file; do
+        # Extract comments and URLs inside them
+        curl -s "$js_file" | grep -oP '(?<=<!--)[^>]+(?=-->)' | grep -oE '\b(https?|http)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]' >> "$output_dir/urls_from_comments.txt"
+    done < "$output_dir/js_files.txt"
+} || error "Failed to extract URLs from comments. Continuing to next step..."
+if [ -s "$output_dir/urls_from_comments.txt" ]; then
+    echo "No commented url found"
+    rm $output_dir/urls_from_comments.txt
+fi
 
-# progress "[4/12] Scanning for XSS..."
-# cat "$output_dir/live_urls.txt" | urlfinder --silent | \
-# grep -vE "\.(jpg|jpeg|png|gif|svg|ico|css|pdf|zip|rar|exe|woff2?|ttf|mp4|mp3|json|xml|yaml)$" | \
-# grep -vE "/(assets|static|images|downloads|robots\.txt)$" | \
-# xargs -I@ dalfox url @ || error "XSS scan failed."
+progress "Scanning for XSS..."
+cat "$output_dir/live_urls.txt" | urlfinder --silent | \
+grep -vE "\.(js|jpg|jpeg|png|gif|svg|ico|css|pdf|zip|rar|exe|woff2?|ttf|mp4|mp3|json|xml|yaml)$" | \
+grep -vE "/(assets|static|images|downloads|robots\.txt)$" | \
+xargs -I@ dalfox url @ || error "XSS scan failed."
 
 
-# progress "Scanning for SQL injection..."
-# cat "$output_dir/live_url.txt" | \
-# xargs -I@ sh -c '
-#     output_dir="'$output_dir'"
-#     waybackurls @ | gf sqli >> "$output_dir/sqli_vulnerabilities.txt"
-# ' && \
-# if [ -s "$output_dir/sqli_vulnerabilities.txt" ]; then
-#     sqlmap -m "$output_dir/sqli_vulnerabilities.txt" --batch --random-agent --level 1
-# else
-#     error "No SQLi vulnerabilities found to scan."
-# fi
+progress "Scanning for SQL injection..."
+cat "$output_dir/live_url.txt" | \
+xargs -I@ sh -c '
+    output_dir="'$output_dir'"
+    waybackurls @ | gf sqli >> "$output_dir/sqli_vulnerabilities.txt"
+' && \
+if [ -s "$output_dir/sqli_vulnerabilities.txt" ]; then
+    sqlmap -m "$output_dir/sqli_vulnerabilities.txt" --batch --random-agent --level 1
+else
+    error "No SQLi vulnerabilities found to scan."
+fi
 
 
 
