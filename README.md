@@ -59,7 +59,7 @@ source ~/.bashrc
 
 2. Run the `setup.sh` script to install tools.
 
-3. Use the main scanning script (`scanner.sh`) to perform automated vulnerability scans.
+3. Use the main scanning script (`autobugfinder.sh`) to perform automated vulnerability scans.
 
 ## Output
 The scanning script generates the following outputs:
