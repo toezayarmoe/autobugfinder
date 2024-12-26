@@ -30,7 +30,7 @@ cat $output_dir/live_assets.txt | awk '{print $1}' | sort -u | tee "$output_dir/
 
 
 progress "Extracting JavaScript files..."
-cat "$output_dir/live_urls.txt" | getJS --complete | tee  "$output_dir/js_files.txt" || error "Failed to extract JavaScript files."
+cat "$output_dir/live_urls.txt" | getJS --complete | grep "$doamin" |  tee  "$output_dir/js_files.txt" || error "Failed to extract JavaScript files."
 
 
 progress "Extracting commented URLs from JavaScript files"
